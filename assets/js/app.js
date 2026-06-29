@@ -1,7 +1,7 @@
 /**
  * AZUBUIKE TECHNOLOGIES INC. // PROJECT 2
  * File: app.js (Main Thread Orchestrator + WebRTC Binary Stream Extension)
- * * Cleaned Syntactic Build Architecture.
+ * * Modified: Background persistence enabled; manual panic trigger only.
  */
 
 (function () {
@@ -296,7 +296,7 @@
     }
 
     /**
-     * TRIPWIRE ARCHITECTURE
+     * MANUAL OVERRIDE TRIPWIRE ARCHITECTURE
      */
     function triggerImmediateSelfDestruct() {
         if (dataChannel) { try { dataChannel.close(); } catch(e){} dataChannel = null; }
@@ -307,17 +307,10 @@
         protocolWorker.postMessage({ type: 'PANIC_PURGE' });
     }
 
-    if (panicBtn) panicBtn.addEventListener('click', triggerImmediateSelfDestruct);
-
-    function handleVisibilityShutter() {
-        if (document.hidden || document.visibilityState === 'hidden') {
-            triggerImmediateSelfDestruct();
-        }
+    if (panicBtn) {
+        panicBtn.addEventListener('click', triggerImmediateSelfDestruct);
     }
-
-    document.addEventListener('visibilitychange', handleVisibilityShutter);
-    window.addEventListener('blur', triggerImmediateSelfDestruct);
-    window.addEventListener('beforeunload', triggerImmediateSelfDestruct);
-    window.addEventListener('unload', triggerImmediateSelfDestruct);
+    
+    // Automated event loop hardware listeners removed completely to maintain persistent channel state.
 })();
-                            
+        
