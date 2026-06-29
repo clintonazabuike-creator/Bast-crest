@@ -18,7 +18,6 @@
             position: relative;
         }
         
-        /* Layout Header & Panic Switch Configuration */
         header { 
             padding: 10px 14px; 
             background: #0d0d11; 
@@ -45,7 +44,6 @@
         }
         button.panic-switch:active { background: #b91c1c; }
         
-        /* Network & Signaling Control Panel */
         .network-panel { 
             background: #111116; 
             border-bottom: 1px solid #222; 
@@ -76,7 +74,36 @@
         .net-input:focus { border-color: #39ff14; }
         .room-display { font-size: 13px; color: #ffaa00; font-weight: bold; }
         
-        /* Terminal Logs Matrix */
+        /* Binary Transport Progress Tracker */
+        .progress-wrapper {
+            background: #0d0d11;
+            border-bottom: 1px solid #222;
+            padding: 6px 12px;
+            display: none;
+        }
+        .progress-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            color: #ffaa00;
+        }
+        .progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: #ffaa00;
+            transition: width 0.1s linear;
+        }
+
         .memory-log { 
             flex: 1; 
             background: #050507; 
@@ -98,8 +125,9 @@
         .log-entry.net { border-left: 2px solid #ffaa00; color: #ffaa00; }
         .log-entry.human { border-left: 2px solid #a855f7; color: #a855f7; font-weight: bold; }
         .log-entry.remote { border-left: 2px solid #33b5ff; color: #33b5ff; font-weight: bold; }
+        .log-entry.file-link { border-left: 2px solid #00ff66; color: #00ff66; font-weight: bold; }
+        .secure-download-link { color: #00ff66; text-decoration: underline; cursor: pointer; }
 
-        /* Control Input Deck */
         .control-panel { 
             background: #0f0f14; 
             border-top: 1px solid #222; 
@@ -117,7 +145,7 @@
             width: 100%;
         }
         textarea { 
-            height: 80px; 
+            height: 60px; 
             background: #141418; 
             color: #fff; 
             border: 1px solid #2a2a35; 
@@ -129,7 +157,12 @@
             outline: none; 
         }
         
-        /* Interface Action Triggers */
+        /* Action Row and File Attach Bindings */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
         button.action-btn { 
             border: none; 
             padding: 10px 16px; 
@@ -145,9 +178,9 @@
         
         button.net-btn { background: #ffaa00; color: #000; }
         button.join-btn { background: #00ff66; color: #000; }
-        button.execute-btn { background: #1e293b; color: #64748b; font-size: 12px; padding: 14px; }
+        button.attach-btn { background: #1e293b; color: #aaa; border: 1px solid #333; }
+        button.execute-btn { flex: 1; background: #1e293b; color: #64748b; font-size: 12px; }
 
-        /* ANTI-SNAPSHOT MOBILE BLUR BLANKET */
         #anti-snapshot-overlay {
             display: none;
             position: absolute;
@@ -162,7 +195,7 @@
     <div id="anti-snapshot-overlay"></div>
 
     <header>
-        <span>AZUBUIKE TECH // PROJECT 2 v1.1.0</span>
+        <span>AZUBUIKE TECH // PROJECT 2 v1.2.0</span>
         <button id="hard-panic-trigger" class="panic-switch">Panic Kill</button>
     </header>
 
@@ -177,15 +210,28 @@
         </div>
     </div>
 
+    <div class="progress-wrapper" id="tx-progress-dock">
+        <div class="progress-container">
+            <span id="tx-progress-title">TRANSFER STATUS: IDLE</span>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="tx-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="memory-log" id="log-window">
         <div class="log-entry sys">[SYS] Air-Gapped volatile communication module armed.</div>
-        <div class="log-entry sys">[SYS] Ready for initialization routing parameters...</div>
+        <div class="log-entry sys">[SYS] Binary payload pipeline extensions operational.</div>
     </div>
 
     <div class="control-panel">
         <div class="input-container">
             <textarea id="code-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Awaiting connection verification map to unlock encryption matrix..."></textarea>
-            <button id="execute-action" class="action-btn execute-btn">Highway Locked</button>
+            <div class="action-row">
+                <input type="file" id="secure-file-injector" style="display: none;">
+                <button id="file-trigger-btn" class="action-btn attach-btn" disabled>Attach Packet</button>
+                <button id="execute-action" class="action-btn execute-btn">Highway Locked</button>
+            </div>
         </div>
     </div>
 
