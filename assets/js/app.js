@@ -1,7 +1,7 @@
 /**
  * AZUBUIKE TECHNOLOGIES INC. // PROJECT 2
  * File: app.js (Main Thread Orchestrator + WebRTC Binary Stream Extension)
- * * Upgraded with Multi-Part High-Entropy Chunk-Streaming Mechanics.
+ * * Cleaned Syntactic Build Architecture.
  */
 
 (function () {
@@ -31,9 +31,7 @@
     let targetPin = null;
     let isHost = false;
 
-    // Secure Data Slicing Constant (Max secure throughput per WebRTC slice window)
     const CHUNK_SIZE = 16384; 
-
     const sseBaseUrl = 'https://ntfy.sh/azubuike_protocol_';
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
@@ -88,7 +86,7 @@
                 sendBtn.style.background = "#39ff14";
                 sendBtn.style.color = "#000";
                 textInput.placeholder = "Type secure message here...";
-                fileTriggerBtn.disabled = false; // Arm file injector button
+                if (fileTriggerBtn) fileTriggerBtn.disabled = false;
                 break;
 
             case 'DISPATCH_PACKET':
@@ -98,30 +96,30 @@
                 break;
 
             case 'TX_PROGRESS':
-                // Update UI state metrics during active encryption streaming run
-                progressDock.style.display = 'block';
-                progressFill.style.width = `${payload.percent}%`;
-                progressTitle.innerText = `TRANSMITTING ENCRYPTED SLICES: ${payload.percent}%`;
-                if (payload.percent >= 100) {
-                    setTimeout(() => { progressDock.style.display = 'none'; }, 1000);
+                if (progressDock && progressFill && progressTitle) {
+                    progressDock.style.display = 'block';
+                    progressFill.style.width = `${payload.percent}%`;
+                    progressTitle.innerText = `TRANSMITTING ENCRYPTED SLICES: ${payload.percent}%`;
+                    if (payload.percent >= 100) {
+                        setTimeout(() => { progressDock.style.display = 'none'; }, 1000);
+                    }
                 }
                 break;
 
             case 'RX_PROGRESS':
-                // Update UI metrics for the target reassembly end node
-                progressDock.style.display = 'block';
-                progressFill.style.width = `${payload.percent}%`;
-                progressTitle.innerText = `REASSEMBLING VOLATILE INBOUND STORAGE: ${payload.percent}%`;
-                if (payload.percent >= 100) {
-                    setTimeout(() => { progressDock.style.display = 'none'; }, 1000);
+                if (progressDock && progressFill && progressTitle) {
+                    progressDock.style.display = 'block';
+                    progressFill.style.width = `${payload.percent}%`;
+                    progressTitle.innerText = `REASSEMBLING VOLATILE INBOUND STORAGE: ${payload.percent}%`;
+                    if (payload.percent >= 100) {
+                        setTimeout(() => { progressDock.style.display = 'none'; }, 1000);
+                    }
                 }
                 break;
 
             case 'COMPILE_FILE_BLOB':
-                // Reassemble raw decrypted parts back into a secure local sandbox anchor
                 const downloadBlob = new Blob([payload.buffer], { type: payload.mime });
                 const url = URL.createObjectURL(downloadBlob);
-                
                 const entry = document.createElement('div');
                 entry.className = 'log-entry file-link';
                 entry.innerHTML = `[${new Date().toLocaleTimeString()}] [INBOUND]: File payload verified [${payload.name}]. <a class="secure-download-link" href="${url}" download="${payload.name}">EXECUTE DATA DECK EXTRACTION</a>`;
@@ -208,7 +206,7 @@
                             type: 'answer', 
                             sdp: btoa(JSON.stringify(localConnection.localDescription)), 
                             publicKey: pubKey 
-                });
+                        });
                         printLog('NET', 'Returned signed cryptographic target answer.');
                         cleanupSignaling();
                     }
@@ -240,7 +238,6 @@
         dataChannel.onopen = () => printLog('SYS', 'P2P Pipeline connected natively.');
         dataChannel.onclose = () => triggerImmediateSelfDestruct();
         
-        // Pass inbound encrypted ArrayBuffers straight to worker (Can be text or file slice)
         dataChannel.onmessage = (e) => protocolWorker.postMessage({ type: 'DECRYPT_MSG', payload: { buffer: e.data } });
     }
 
@@ -263,39 +260,40 @@
     /**
      * BINARY CHUNK-SLICING INFRASTRUCTURE
      */
-    fileTriggerBtn.addEventListener('click', () => fileInjector.click());
+    if (fileTriggerBtn && fileInjector) {
+        fileTriggerBtn.addEventListener('click', () => fileInjector.click());
 
-    fileInjector.addEventListener('change', function() {
-        const file = this.files[0];
-        if (!file || !dataChannel || dataChannel.readyState !== 'open') return;
+        fileInjector.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file || !dataChannel || dataChannel.readyState !== 'open') return;
 
-        printLog('SYS', `Slicing package vector data: ${file.name} (${file.size} bytes)...`);
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const rawArrayBuffer = e.target.result;
-            let offset = 0;
-            const totalChunks = Math.ceil(rawArrayBuffer.byteLength / CHUNK_SIZE);
+            printLog('SYS', `Slicing package vector data: ${file.name} (${file.size} bytes)...`);
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawArrayBuffer = e.target.result;
+                let offset = 0;
+                const totalChunks = Math.ceil(rawArrayBuffer.byteLength / CHUNK_SIZE);
 
-            // Pass the raw pieces to worker one by one for segmented encryption sequencing
-            for (let i = 0; i < totalChunks; i++) {
-                const currentSlice = rawArrayBuffer.slice(offset, offset + CHUNK_SIZE);
-                protocolWorker.postMessage({
-                    type: 'ENCRYPT_FILE_CHUNK',
-                    payload: {
-                        buffer: currentSlice,
-                        name: file.name,
-                        mime: file.type,
-                        size: file.size,
-                        index: i,
-                        total: totalChunks
-                    }
-                }, [currentSlice]); // Zero-copy memory transfer optimization
-                offset += CHUNK_SIZE;
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    });
+                for (let i = 0; i < totalChunks; i++) {
+                    const currentSlice = rawArrayBuffer.slice(offset, offset + CHUNK_SIZE);
+                    protocolWorker.postMessage({
+                        type: 'ENCRYPT_FILE_CHUNK',
+                        payload: {
+                            buffer: currentSlice,
+                            name: file.name,
+                            mime: file.type,
+                            size: file.size,
+                            index: i,
+                            total: totalChunks
+                        }
+                    }, [currentSlice]);
+                    offset += CHUNK_SIZE;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
 
     /**
      * TRIPWIRE ARCHITECTURE
@@ -322,4 +320,4 @@
     window.addEventListener('beforeunload', triggerImmediateSelfDestruct);
     window.addEventListener('unload', triggerImmediateSelfDestruct);
 })();
-            
+                            
