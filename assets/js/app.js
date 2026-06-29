@@ -1,11 +1,14 @@
 /**
  * AZUBUIKE TECHNOLOGIES INC. // PROJECT 2
  * File: app.js (Main Thread Orchestrator + WebRTC Transport Layer)
+ * * Memory Isolator Layer - Fixed Cache-Busting Instance.
  */
 
 (function () {
-    const protocolWorker = new Worker('assets/js/worker.js');
+    // FIXED: Dynamic cache-busting string destroys stubborn mobile browser caching
+    const protocolWorker = new Worker('assets/js/worker.js?v=' + Date.now());
 
+    // DOM Element Mappings
     const initBtn = document.getElementById('init-peer');
     const connectBtn = document.getElementById('connect-peer');
     const remotePinInput = document.getElementById('remote-pin');
@@ -31,7 +34,7 @@
         logsContainer.scrollTop = logsContainer.scrollHeight;
     }
 
-    // 1. Kickoff Keys Generation inside Vault Worker
+    // Initialize Cryptographic Key Pairs Inside Isolated Worker Context First
     initBtn.addEventListener('click', () => {
         isHost = true;
         targetPin = Math.floor(1000 + Math.random() * 9000).toString();
@@ -44,7 +47,10 @@
     connectBtn.addEventListener('click', () => {
         isHost = false;
         targetPin = remotePinInput.value.trim();
-        if (targetPin.length !== 4) return;
+        if (targetPin.length !== 4 || isNaN(targetPin)) {
+            printLog('SYS', 'Validation Failure: Room PIN must be exactly 4 digits.');
+            return;
+        }
         lockUI();
         printLog('SYS', 'Generating secure keys inside memory isolation worker...');
         protocolWorker.postMessage({ type: 'GENERATE_KEYS' });
@@ -54,7 +60,9 @@
         initBtn.disabled = connectBtn.disabled = remotePinInput.disabled = true;
     }
 
-    // 2. Worker Feedback Intercept Engine
+    /**
+     * WORKER RESPONSE HANDLING MATRICES
+     */
     protocolWorker.onmessage = function (e) {
         const { type, payload } = e.data;
 
@@ -63,6 +71,7 @@
                 if (isHost) startHost(payload.publicKey);
                 else startPeer(payload.publicKey);
                 break;
+
             case 'CRYPTO_READY':
                 printLog('NET', 'CRYPTO HIGHWAY CONFIRMED: Shared asymmetric matrix locked.');
                 sendBtn.innerText = "Dispatch Encrypted Packet";
@@ -70,35 +79,46 @@
                 sendBtn.style.color = "#000";
                 textInput.placeholder = "Type secure message here...";
                 break;
+
             case 'DISPATCH_PACKET':
+                // Send raw encrypted ArrayBuffer straight over WebRTC Data Channel
                 if (dataChannel && dataChannel.readyState === 'open') {
                     dataChannel.send(payload.buffer);
                 }
                 break;
+
             case 'RENDER_MSG':
                 printLog('REMOTE', payload.text);
                 break;
+
             case 'SYS_LOG':
                 printLog('SYS', payload);
                 break;
+
             case 'TERMINATION_COMPLETE':
                 window.location.reload();
                 break;
         }
     };
 
-    // WebRTC Implementations on Main Window Scope
+    /**
+     * NATIVE WEBRTC TRANSPORT LAYER (RUNNING ON WINDOW CONTEXT)
+     */
     function startHost(pubKey) {
         printLog('NET', `Initializing Host Routing Pipeline on PIN: ${targetPin}`);
         sseSource = new EventSource(sseBaseUrl + targetPin + '/sse');
         
         sseSource.onmessage = function(e) {
             try {
-                const packet = JSON.parse(JSON.parse(e.data).message);
-                if (packet.type === 'answer' && packet.origin === 'peer') {
-                    protocolWorker.postMessage({ type: 'DERIVE_KEY', payload: { publicKey: packet.publicKey } });
-                    localConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(packet.sdp))));
-                    if(sseSource) { sseSource.close(); sseSource = null; }
+                const rawData = JSON.parse(e.data);
+                if (rawData && rawData.message) {
+                    const packet = JSON.parse(rawData.message);
+                    if (packet.type === 'answer' && packet.origin === 'peer') {
+                        printLog('SYS', 'Handshake token captured. Intersecting mathematical keys...');
+                        protocolWorker.postMessage({ type: 'DERIVE_KEY', payload: { publicKey: packet.publicKey } });
+                        localConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(packet.sdp))));
+                        cleanupSignaling();
+                    }
                 }
             } catch(err) {}
         };
@@ -109,7 +129,13 @@
 
         localConnection.onicecandidate = (e) => {
             if (!e.candidate) {
-                sendSignal({ origin: 'host', type: 'offer', sdp: btoa(JSON.stringify(localConnection.localDescription)), publicKey: pubKey });
+                sendSignal({ 
+                    origin: 'host', 
+                    type: 'offer', 
+                    sdp: btoa(JSON.stringify(localConnection.localDescription)), 
+                    publicKey: pubKey 
+                });
+                printLog('NET', 'Dispatched configuration mappings offer + Public Cryptographic Key.');
             }
         };
         localConnection.createOffer().then(desc => localConnection.setLocalDescription(desc));
@@ -124,14 +150,26 @@
 
         sseSource.onmessage = async function(e) {
             try {
-                const packet = JSON.parse(JSON.parse(e.data).message);
-                if (packet.type === 'offer' && packet.origin === 'host') {
-                    protocolWorker.postMessage({ type: 'DERIVE_KEY', payload: { publicKey: packet.publicKey } });
-                    await localConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(packet.sdp))));
-                    const answer = await localConnection.createAnswer();
-                    await localConnection.setLocalDescription(answer);
-                    sendSignal({ origin: 'peer', type: 'answer', sdp: btoa(JSON.stringify(localConnection.localDescription)), publicKey: pubKey });
-                    if(sseSource) { sseSource.close(); sseSource = null; }
+                const rawData = JSON.parse(e.data);
+                if (rawData && rawData.message) {
+                    const packet = JSON.parse(rawData.message);
+                    if (packet.type === 'offer' && packet.origin === 'host') {
+                        printLog('SYS', 'Host configuration offer validated. Computing shared secret...');
+                        protocolWorker.postMessage({ type: 'DERIVE_KEY', payload: { publicKey: packet.publicKey } });
+                        
+                        await localConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(packet.sdp))));
+                        const answer = await localConnection.createAnswer();
+                        await localConnection.setLocalDescription(answer);
+                        
+                        sendSignal({ 
+                            origin: 'peer', 
+                            type: 'answer', 
+                            sdp: btoa(JSON.stringify(localConnection.localDescription)), 
+                            publicKey: pubKey 
+                        });
+                        printLog('NET', 'Returned signed cryptographic target answer.');
+                        cleanupSignaling();
+                    }
                 }
             } catch(err) {}
         };
@@ -142,25 +180,46 @@
         xhr.open("POST", sseBaseUrl + targetPin, true);
         xhr.setRequestHeader("Content-Type", "text/plain");
         xhr.setRequestHeader("X-Cache", "no");
+        xhr.setRequestHeader("X-Firebase", "no");
         xhr.send(JSON.stringify(packet));
+    }
+
+    function cleanupSignaling() {
+        if (sseSource) {
+            sseSource.close();
+            sseSource = null;
+            printLog('SYS', 'Signaling paths severed. Transient metadata erased from wire.');
+        }
     }
 
     function setupChannel(chan) {
         dataChannel = chan;
         dataChannel.binaryType = "arraybuffer";
+        
         dataChannel.onopen = () => printLog('SYS', 'P2P Pipeline connected natively.');
         dataChannel.onclose = () => protocolWorker.postMessage({ type: 'PANIC_PURGE' });
+        
+        // Pass encrypted buffers directly into the worker thread for safe isolation decryption
         dataChannel.onmessage = (e) => protocolWorker.postMessage({ type: 'DECRYPT_MSG', payload: { buffer: e.data } });
     }
 
     sendBtn.addEventListener('click', () => {
         const text = textInput.value.trim();
         if (!text || !dataChannel || dataChannel.readyState !== 'open') return;
+        
+        // Hand the plaintext directly to the worker. It stays out of the main memory stack.
         protocolWorker.postMessage({ type: 'ENCRYPT_MSG', payload: { text } });
         printLog('HUMAN', text);
         textInput.value = '';
     });
+
+    textInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendBtn.click();
+        }
+    });
     
     window.addEventListener('beforeunload', () => protocolWorker.postMessage({ type: 'PANIC_PURGE' }));
+    window.addEventListener('unload', () => protocolWorker.postMessage({ type: 'PANIC_PURGE' }));
 })();
-                
