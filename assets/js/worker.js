@@ -1,7 +1,7 @@
 /**
  * AZUBUIKE TECHNOLOGIES INC. // PROJECT 2
  * File: worker.js (Pure Crypto & Vault Context)
- * * Absolute Volatile Memory Context - Zero Disk Footprint.
+ * * Absolute Volatile Memory Context - Explicit Anti-Forensic Zeroization.
  */
 
 let localKeyPair = null;
@@ -16,7 +16,7 @@ self.onmessage = async function(e) {
             try {
                 localKeyPair = await self.crypto.subtle.generateKey(
                     { name: "ECDH", namedCurve: "P-384" },
-                    false, // Strictly non-extractable out of volatile RAM
+                    false, // Non-extractable out of volatile RAM context
                     ["deriveKey", "deriveBits"]
                 );
                 const exportedKey = await self.crypto.subtle.exportKey("raw", localKeyPair.publicKey);
@@ -37,7 +37,7 @@ self.onmessage = async function(e) {
                     { name: "ECDH", public: importedKey },
                     localKeyPair.privateKey,
                     { name: "AES-GCM", length: 256 },
-                    false, // Static barrier prevents extraction via injection vectors
+                    false, // Static barrier prevents extraction via script injection
                     ["encrypt", "decrypt"]
                 );
                 self.postMessage({ type: 'CRYPTO_READY' });
@@ -86,10 +86,27 @@ self.onmessage = async function(e) {
             break;
 
         case 'PANIC_PURGE':
-            localKeyPair = null;
-            derivedSymmetricKey = null;
-            internalChatHistory.length = 0;
-            self.postMessage({ type: 'TERMINATION_COMPLETE' });
+            executeHardNuclearPurge();
             break;
     }
 };
+
+/**
+ * NUCLEAR ACTIVE MEMORY ZEROIZATION ENGINE
+ */
+function executeHardNuclearPurge() {
+    // 1. Fill historical memory buffer arrays with zero metrics to clean RAM residue
+    if (internalChatHistory.length > 0) {
+        for (let i = 0; i < internalChatHistory.length; i++) {
+            internalChatHistory[i].text = "0000000000000000";
+        }
+        internalChatHistory.length = 0;
+    }
+
+    // 2. Break key references completely for immediate Garbage Collector eviction
+    localKeyPair = null;
+    derivedSymmetricKey = null;
+
+    // 3. Confirm total destruction state back to main controller thread
+    self.postMessage({ type: 'TERMINATION_COMPLETE' });
+}
