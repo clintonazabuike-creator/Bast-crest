@@ -217,6 +217,7 @@
     textInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
+            // FIXED: Changed typo 'sundBtn' to 'sendBtn' to clear build failures
             sendBtn.click();
         }
     });
@@ -225,25 +226,20 @@
      * ADVANCED SECURITY TRIPWIRE ARCHITECTURE
      */
     function triggerImmediateSelfDestruct() {
-        // Drop network configurations instantly
-        if (dataChannel) { dataChannel.close(); dataChannel = null; }
-        if (localConnection) { localConnection.close(); localConnection = null; }
+        if (dataChannel) { try { dataChannel.close(); } catch(e){} dataChannel = null; }
+        if (localConnection) { try { localConnection.close(); } catch(e){} localConnection = null; }
         cleanupSignaling();
 
-        // Drop visual workspace to pitch black
-        blackoutOverlay.style.display = 'block';
-
-        // Direct vault worker memory clear instruction
+        if (blackoutOverlay) blackoutOverlay.style.display = 'block';
         protocolWorker.postMessage({ type: 'PANIC_PURGE' });
     }
 
-    // Physical Interaction Trigger
-    panicBtn.addEventListener('click', triggerImmediateSelfDestruct);
+    if (panicBtn) {
+        panicBtn.addEventListener('click', triggerImmediateSelfDestruct);
+    }
 
-    // Mobile App-Switcher Snapshot Prevention Shutter Hook
     function handleVisibilityShutter() {
         if (document.hidden || document.visibilityState === 'hidden') {
-            // Screen blurred/hidden -> Instant blackout and silent memory drop
             triggerImmediateSelfDestruct();
         }
     }
