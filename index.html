@@ -15,16 +15,35 @@
             display: flex; 
             flex-direction: column; 
             overflow: hidden; 
+            position: relative;
         }
+        
+        /* Layout Header & Panic Switch Configuration */
         header { 
-            padding: 14px; 
+            padding: 10px 14px; 
             background: #0d0d11; 
             border-bottom: 1px solid #222; 
-            text-align: center; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             font-size: 11px; 
             font-weight: bold; 
-            letter-spacing: 1.5px; 
+            letter-spacing: 1px; 
         }
+        button.panic-switch {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
+        }
+        button.panic-switch:active { background: #b91c1c; }
         
         /* Network & Signaling Control Panel */
         .network-panel { 
@@ -57,7 +76,7 @@
         .net-input:focus { border-color: #39ff14; }
         .room-display { font-size: 13px; color: #ffaa00; font-weight: bold; }
         
-        /* Terminal Logs Matrix (Main Viewport) */
+        /* Terminal Logs Matrix */
         .memory-log { 
             flex: 1; 
             background: #050507; 
@@ -109,7 +128,6 @@
             resize: none; 
             outline: none; 
         }
-        textarea:focus { border-color: #333; }
         
         /* Interface Action Triggers */
         button.action-btn { 
@@ -122,19 +140,31 @@
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
             font-family: monospace;
-            transition: opacity 0.15s ease;
         }
         button.action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        button.action-btn:active:not(:disabled) { opacity: 0.8; }
         
         button.net-btn { background: #ffaa00; color: #000; }
         button.join-btn { background: #00ff66; color: #000; }
         button.execute-btn { background: #1e293b; color: #64748b; font-size: 12px; padding: 14px; }
+
+        /* ANTI-SNAPSHOT MOBILE BLUR BLANKET */
+        #anti-snapshot-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000000;
+            z-index: 99999;
+        }
     </style>
 </head>
 <body>
 
-    <header>AZUBUIKE TECHNOLOGIES // PROJECT 2: AIR-GAPPED P2P PROTOCOL v1.0.0</header>
+    <div id="anti-snapshot-overlay"></div>
+
+    <header>
+        <span>AZUBUIKE TECH // PROJECT 2 v1.1.0</span>
+        <button id="hard-panic-trigger" class="panic-switch">Panic Kill</button>
+    </header>
 
     <div class="network-panel">
         <div class="network-row">
@@ -161,5 +191,4 @@
 
     <script src="assets/js/app.js"></script>
 </body>
-          </html>
-
+</html>
