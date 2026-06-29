@@ -1,11 +1,11 @@
 /**
  * AZUBUIKE TECHNOLOGIES INC. // PROJECT 2
  * File: app.js (Main Thread Orchestrator + WebRTC Transport Layer)
- * * Memory Isolator Layer - Fixed Cache-Busting Instance.
+ * * Upgraded with Anti-Snapshot & Hard Panic Trigger Blocks.
  */
 
 (function () {
-    // FIXED: Dynamic cache-busting string destroys stubborn mobile browser caching
+    // Dynamic cache-busting string destroys stubborn mobile browser caching
     const protocolWorker = new Worker('assets/js/worker.js?v=' + Date.now());
 
     // DOM Element Mappings
@@ -16,6 +16,10 @@
     const sendBtn = document.getElementById('execute-action');
     const textInput = document.getElementById('code-input');
     const logsContainer = document.getElementById('log-window');
+    
+    // Panic & Security Mappings
+    const panicBtn = document.getElementById('hard-panic-trigger');
+    const blackoutOverlay = document.getElementById('anti-snapshot-overlay');
 
     let localConnection = null;
     let dataChannel = null;
@@ -81,7 +85,6 @@
                 break;
 
             case 'DISPATCH_PACKET':
-                // Send raw encrypted ArrayBuffer straight over WebRTC Data Channel
                 if (dataChannel && dataChannel.readyState === 'open') {
                     dataChannel.send(payload.buffer);
                 }
@@ -96,13 +99,14 @@
                 break;
 
             case 'TERMINATION_COMPLETE':
-                window.location.reload();
+                // Page undergoes immediate nuclear clear loop
+                window.location.replace('about:blank');
                 break;
         }
     };
 
     /**
-     * NATIVE WEBRTC TRANSPORT LAYER (RUNNING ON WINDOW CONTEXT)
+     * NATIVE WEBRTC TRANSPORT LAYER
      */
     function startHost(pubKey) {
         printLog('NET', `Initializing Host Routing Pipeline on PIN: ${targetPin}`);
@@ -180,7 +184,6 @@
         xhr.open("POST", sseBaseUrl + targetPin, true);
         xhr.setRequestHeader("Content-Type", "text/plain");
         xhr.setRequestHeader("X-Cache", "no");
-        xhr.setRequestHeader("X-Firebase", "no");
         xhr.send(JSON.stringify(packet));
     }
 
@@ -197,9 +200,8 @@
         dataChannel.binaryType = "arraybuffer";
         
         dataChannel.onopen = () => printLog('SYS', 'P2P Pipeline connected natively.');
-        dataChannel.onclose = () => protocolWorker.postMessage({ type: 'PANIC_PURGE' });
+        dataChannel.onclose = () => triggerImmediateSelfDestruct();
         
-        // Pass encrypted buffers directly into the worker thread for safe isolation decryption
         dataChannel.onmessage = (e) => protocolWorker.postMessage({ type: 'DECRYPT_MSG', payload: { buffer: e.data } });
     }
 
@@ -207,7 +209,6 @@
         const text = textInput.value.trim();
         if (!text || !dataChannel || dataChannel.readyState !== 'open') return;
         
-        // Hand the plaintext directly to the worker. It stays out of the main memory stack.
         protocolWorker.postMessage({ type: 'ENCRYPT_MSG', payload: { text } });
         printLog('HUMAN', text);
         textInput.value = '';
@@ -219,7 +220,36 @@
             sendBtn.click();
         }
     });
-    
-    window.addEventListener('beforeunload', () => protocolWorker.postMessage({ type: 'PANIC_PURGE' }));
-    window.addEventListener('unload', () => protocolWorker.postMessage({ type: 'PANIC_PURGE' }));
+
+    /**
+     * ADVANCED SECURITY TRIPWIRE ARCHITECTURE
+     */
+    function triggerImmediateSelfDestruct() {
+        // Drop network configurations instantly
+        if (dataChannel) { dataChannel.close(); dataChannel = null; }
+        if (localConnection) { localConnection.close(); localConnection = null; }
+        cleanupSignaling();
+
+        // Drop visual workspace to pitch black
+        blackoutOverlay.style.display = 'block';
+
+        // Direct vault worker memory clear instruction
+        protocolWorker.postMessage({ type: 'PANIC_PURGE' });
+    }
+
+    // Physical Interaction Trigger
+    panicBtn.addEventListener('click', triggerImmediateSelfDestruct);
+
+    // Mobile App-Switcher Snapshot Prevention Shutter Hook
+    function handleVisibilityShutter() {
+        if (document.hidden || document.visibilityState === 'hidden') {
+            // Screen blurred/hidden -> Instant blackout and silent memory drop
+            triggerImmediateSelfDestruct();
+        }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityShutter);
+    window.addEventListener('blur', triggerImmediateSelfDestruct);
+    window.addEventListener('beforeunload', triggerImmediateSelfDestruct);
+    window.addEventListener('unload', triggerImmediateSelfDestruct);
 })();
